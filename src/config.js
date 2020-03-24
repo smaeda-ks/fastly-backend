@@ -1,14 +1,15 @@
 'use strict';
 
 const config = {
-  delay: 3000,
+  delay: 1500,
   timeout: 10000, //for fastly-promises client
+  maxConcurrentSize: 10,
   token: 'fastly_api_token',
   body: {
-    shield: 'mdw-il-us'
+    shield: 'dca-dc-us'
   },
   affected(backend) {
-    return backend.shield === 'ord-il-us';
+    return backend.shield === 'iad-va-us';
   }
 };
 
