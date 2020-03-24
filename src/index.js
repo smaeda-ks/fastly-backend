@@ -27,14 +27,31 @@ const fastly = require('./fastly-promises');
           const active = (await service.getActiveVersion()).data;
           const backends = await service.readBackends(active.number);
           const pools = await service.readPools(active.number);
+          const directors = await service.readDirectors(active.number);
           const affectedBackends = backends.data.filter(config.affected);
           const affectedPools = pools.data.filter(config.affected);
-          
+          const affectedDirectors = directors.data.filter(config.affected);
+
           let clone = null;
           let isPoolsUpdated = false;
           let isBackendsUpdated = false;
-          if (affectedBackends.length || affectedPools.length) {
+          let isDirectorsUpdated = false;
+          if (affectedBackends.length || affectedPools.length || affectedDirectors.length) {
             clone = await service.cloneVersion(active.number);
+          }
+
+          if (affectedDirectors.length) {
+            //versionless objects are shouldn't be updated concurrently
+            //ref.NEX-1933
+            for (let director of affectedDirectors) {
+              await service.updateDirector(clone.data.number, director.name, config.body)
+                .then(isDirectorsUpdated = true)
+                .catch(err => {
+                  console.log(`Error (id: ${id}, director: ${director.name}): ${err.message}`);
+                  return
+                });
+            }
+            if (isDirectorsUpdated) console.log(`Updated service (director): ${id}, version: ${clone.data.number}`);
           }
 
           if (affectedPools.length) {
@@ -64,7 +81,7 @@ const fastly = require('./fastly-promises');
             if (isBackendsUpdated) console.log(`Updated service (backends): ${id}, version: ${clone.data.number}`);
           }
           
-          if (clone !== null && (isPoolsUpdated || isBackendsUpdated)) {
+          if (clone !== null && (isPoolsUpdated || isBackendsUpdated || isDirectorsUpdated)) {
             await service.activateVersion(clone.data.number);
           }
 
