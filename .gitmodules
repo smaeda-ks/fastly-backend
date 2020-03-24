@@ -1,0 +1,3 @@
+[submodule "src/fastly-promises"]
+	path = src/fastly-promises
+	url = https://github.com/smaeda-ks/fastly-promises

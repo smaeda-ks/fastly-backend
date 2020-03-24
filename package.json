@@ -28,6 +28,6 @@
     "node": ">=8.0.0"
   },
   "dependencies": {
-    "fastly-promises": "0.8.0"
+    "fastly-promises": "file:src/fastly-promises"
   }
 }

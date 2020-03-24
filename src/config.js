@@ -2,6 +2,7 @@
 
 const config = {
   delay: 3000,
+  timeout: 10000, //for fastly-promises client
   token: 'fastly_api_token',
   body: {
     shield: 'mdw-il-us'
