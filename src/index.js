@@ -82,12 +82,17 @@ const fastly = require('./fastly-promises');
           }
           
           if (clone !== null && (isPoolsUpdated || isBackendsUpdated || isDirectorsUpdated)) {
-            await service.activateVersion(clone.data.number);
+            await service.activateVersion(clone.data.number)
+              .then(console.log(`Activated service (success): ${id}, version: ${clone.data.number}`))
+              .catch(err => {
+                console.log(`Error (id: ${id}, failed activating version: ${clone.data.number}): ${err.message}`);
+              });
+
           }
 
           await sleep(config.delay);
         } catch (err) {
-        console.log(`Error (id: ${id}, needs retry): ${err.message}`);
+        console.log(`Error (id: ${id}, needs retry?): ${err.message}`);
         }
       }));
       promiseIndex += maxConcurrentSize;
