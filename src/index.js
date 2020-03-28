@@ -41,8 +41,8 @@ const fastly = require('./fastly-promises');
           }
 
           if (affectedDirectors.length) {
-            //versionless objects are shouldn't be updated concurrently
-            //ref.NEX-1933
+            // versionless objects are shouldn't be updated concurrently
+            // ref.NEX-1933
             for (let director of affectedDirectors) {
               await service.updateDirector(clone.data.number, director.name, config.body)
                 .then(isDirectorsUpdated = true)
@@ -55,8 +55,8 @@ const fastly = require('./fastly-promises');
           }
 
           if (affectedPools.length) {
-            //versionless objects are shouldn't be updated concurrently
-            //ref.NEX-1933
+            // versionless objects are shouldn't be updated concurrently
+            // ref.NEX-1933
             for (let pool of affectedPools) {
               await service.updatePool(clone.data.number, pool.name, config.body)
                 .then(isPoolsUpdated = true)
@@ -82,6 +82,11 @@ const fastly = require('./fastly-promises');
           }
           
           if (clone !== null && (isPoolsUpdated || isBackendsUpdated || isDirectorsUpdated)) {
+            // add version comment
+            await service.updateVersion(clone.data.number, config.versionComment);
+
+            // activate new version
+            // if fails, probably there's custom VCL/snippets that include shielding definition
             await service.activateVersion(clone.data.number)
               .then(console.log(`Activated service (success): ${id}, version: ${clone.data.number}`))
               .catch(err => {
