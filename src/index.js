@@ -84,7 +84,7 @@ const fastly = require('./fastly-promises');
           if (clone !== null && (isPoolsUpdated || isBackendsUpdated || isDirectorsUpdated)) {
             // add version comment
             await service.updateVersion(clone.data.number, config.versionComment);
-
+            await sleep(1000);
             // activate new version
             // if fails, probably there's custom VCL/snippets that include shielding definition
             await service.activateVersion(clone.data.number)
