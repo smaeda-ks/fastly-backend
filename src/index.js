@@ -69,9 +69,8 @@ const fastly = require('./fastly-promises');
           }
 
           if (affectedBackends.length) {
-            // const clone = await service.cloneVersion(active.number);
             await Promise.all(affectedBackends.map(backend => {
-              service.updateBackend(clone.data.number, backend.name, config.body)
+              return service.updateBackend(clone.data.number, backend.name, config.body)
                 .then(isBackendsUpdated = true)
                 .catch(err => {
                   console.log(`Error (id: ${id}, backend: ${backend.name}): ${err.message}`);
