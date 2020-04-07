@@ -32,10 +32,16 @@ const fastly = require('./fastly-promises');
           const affectedPools = pools.data.filter(config.affected);
           const affectedDirectors = directors.data.filter(config.affected);
 
+          // for update check
           let clone = null;
           let isPoolsUpdated = false;
           let isBackendsUpdated = false;
           let isDirectorsUpdated = false;
+
+          // for error check
+          let isPoolsUpdateError = false;
+          let isBackendsUpdateError = false;
+          let isDirectorsUpdateError = false;
           if (affectedBackends.length || affectedPools.length || affectedDirectors.length) {
             clone = await service.cloneVersion(active.number);
           }
@@ -47,6 +53,7 @@ const fastly = require('./fastly-promises');
               await service.updateDirector(clone.data.number, director.name, config.body)
                 .then(isDirectorsUpdated = true)
                 .catch(err => {
+                  isDirectorsUpdateError = true;
                   console.log(`Error (id: ${id}, director: ${director.name}): ${err.message}`);
                   return
                 });
@@ -61,6 +68,7 @@ const fastly = require('./fastly-promises');
               await service.updatePool(clone.data.number, pool.name, config.body)
                 .then(isPoolsUpdated = true)
                 .catch(err => {
+                  isPoolsUpdateError = true;
                   console.log(`Error (id: ${id}, pool: ${pool.name}): ${err.message}`);
                   return
                 });
@@ -73,6 +81,7 @@ const fastly = require('./fastly-promises');
               return service.updateBackend(clone.data.number, backend.name, config.body)
                 .then(isBackendsUpdated = true)
                 .catch(err => {
+                  isBackendsUpdateError = true;
                   console.log(`Error (id: ${id}, backend: ${backend.name}): ${err.message}`);
                   return
               });
@@ -80,7 +89,9 @@ const fastly = require('./fastly-promises');
             if (isBackendsUpdated) console.log(`Updated service (backends): ${id}, version: ${clone.data.number}`);
           }
           
-          if (clone !== null && (isPoolsUpdated || isBackendsUpdated || isDirectorsUpdated)) {
+          if (isBackendsUpdateError || isDirectorsUpdateError || isPoolsUpdateError) {
+            console.log(`Error (id: ${id}, skipped activating version: ${clone.data.number}): hit error either in updating backend/director/pool`);
+          } else if (clone !== null && (isPoolsUpdated || isBackendsUpdated || isDirectorsUpdated)) {
             // add version comment
             await service.updateVersion(clone.data.number, config.versionComment);
             await sleep(1000);
@@ -90,14 +101,16 @@ const fastly = require('./fastly-promises');
               .then(console.log(`Activated service (success): ${id}, version: ${clone.data.number}`))
               .catch(err => {
                 console.log(`Error (id: ${id}, failed activating version: ${clone.data.number}): ${err.message}`);
+                return
               });
 
           }
 
           await sleep(config.delay);
         } catch (err) {
-        console.log(`Error (id: ${id}, needs retry?): ${err.message}`);
+          console.log(`Error (id: ${id}, needs retry?): ${err.message}`);
         }
+        return
       }));
       promiseIndex += maxConcurrentSize;
     }
